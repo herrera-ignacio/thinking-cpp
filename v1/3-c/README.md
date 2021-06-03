@@ -9,6 +9,11 @@
 * Pointers
   * Modifying the outside object
 * References
+* Scoping
+* Storage Allocation
+* Preprocessor Macros Overview
+* Operators
+* Explicit Casting
 
 ## Using the C function library
 
@@ -86,6 +91,8 @@ The `&` operator, when preceding an identifier name, will produce the address of
 
 C and C++ have a special type of variable that holds an address, a **pointer**. This way you can store an address inside another variable for later use. The operator that defines a pointer is `*` and you must specify the type of variable it points to. The compiler knows that it isn't multiplication because of the context in which it is used, as you will see.
 
+> You can state that a pointer is a `void*`, meaning that any type of address at all can be assigned to that pointer. You lose any information about what type it is, so before oyu can use the pointer, you must cast it to the correct type.
+
 ### Modifying the outside object
 
 Ordinarily, when you pass an argument to a function, a copy of that argument is made inside the function. This is referred to as **pass-by-value**.
@@ -98,3 +105,94 @@ Pointers work roughly the same in C and in C++, but C++ adds an additional way t
 
 The difference between references and pointers is that *calling* a function that takes references is cleaner, syntatically, than calling a function that takes pointers.
 
+## Scoping
+
+> Scoping rules tell you where a variable is valid, where it is created, and where it gets destroyed (i.e, goes out of scope).
+
+The scope of a variable extends *from the point where it is defiend to the first closing brance that matches the closest opening brace before the variable was defined*. That is scope is defined by its "nearest" set of braces.
+
+A variable can be used only when inside its scope. Scopes can be nested, and you can access a variable in a scope that encloses the scope you are in.
+
+## Storage Allocation
+
+* __Global__: Defined outside all function bodies and are available to all parts of the program (even code in other files). They are unaffected by scopes and are the lifetime lasts until program ends. If is declared using the `extern` keyword in another file, the data is available for use by the second file, when compiler encounters the declaration `extern T identifier`, it knows that the definition for *identifier* must exist somewhere as a global variable.
+
+* __Local__: Occur within a scope; they are "local" to a function. They are often called *automatic* variables because they automatically come into being when the scope is entered and automatically go away when the scope closes. The keyword `auto` makes this explicit, but local variables default to `auto` so it is never necessary to declare something as an `auto`.
+  
+  * `register`: Tells the compiler a hint: "Make accesses to this variable as fast as possible". Though, there is no guarantee that the variable will be placed in a register or even that the access speed will increase, it is only a hint to the compiler.
+    * Cannot take or compute the address.
+    * Can be declared only within a block.
+
+  * `static`: You can define a function's local variable to be `static` and give it an initial value. The initialization is performed only the first time the function is called, and the data retains its value between function calls. This way, a function can "remember" some piece of information between function calls.
+
+* __Constants__: Tells the compiler that a name represents a constant. Any data type, bult-in or user-defined, may be defined as `const`. It has a scope, just like a regular variable, so you can "hide" a *const* inside a function and be sure that the name will not affect the rest of the program.
+
+* __Volatile__: It tells the compiler "You never know when this will change", and prevents the compiler from perfoming any optimizations based on the stability of that variable.
+
+## Preprocessor Macros Overview
+
+You can save typing and by using macros. See the following example:
+
+```cpp
+#include <iostream>
+using namespace std;
+
+// Macro to display a string and a value
+#define PRINT(STR, VAR) \
+  cout << STR "  = " << VAR << endl
+
+int main () {
+  int i = 1;
+  PRINT("i", i);
+}
+```
+
+## Operators
+
+* **Assignment & Mathematical**
+  * `-`, `+`, `/`, `*`, `%`
+  * `=`, `-=`, `+=`, `/=`, `*=`, `%=`
+* **Relational**
+  * `<`, `>`, `<=`, `>=`, `==`, `!=`
+* **Logical** (`bool`)
+  * `&&`, `||`
+* **Bitwise** (`char`, `int`, and `long`)
+  * `&` and, `|` or, `^` xor, `~` not
+  * `&=`, `|=`, `^=`
+* **Shift**
+  * `<<` and `>>`
+  * `<<=` and `>>=`
+* **Unary**
+  * `!` not, `-`, and `+`.
+  * `&` address-of, `*` and `->` dereference
+  * `(desired-type w/modifiers) value` Cast operators in C and C++ (i.e, `unsigned long a = (unsigned long int)b;`)
+  * `new` and `delete` in C++
+* **Ternary**
+  * `(boolean expression) ? true-case : false-case`
+* `sizeof`: Information about the amount of memory allocated for data items.
+
+### Ternary example
+
+```cpp
+a = --b ? b : (b = -99);
+```
+
+Here, the conditional produces the rvalue. `a` is assigned to the value of `b` if the result of decrementing `b` is nonzero. If `b` became zero, `a` and `b` are both assigned to `-99`. `b` is always decremented, but it is assigned to `-99` only if the decrement causes `b` to become 0.
+
+A similar statement can be used just for its side effects:
+
+```cpp
+--b ? b : (b = -99)
+```
+
+Here the second `b` is sueprfluous.
+
+## Explicit Casting
+
+* `static_cast`: For "well-behaved" and "reasonably well-behaved" casts, including automatic implicit type conversions, narrowing conversions, forcing a conversion from a `void*`, and static navigation of class hierarchies.
+
+* `const_cast`: Convert from a `const` or from a `volatile`.
+
+* `reinterpret_cast`: This is the least safe of the casting mechanisms, and the one most likely to produce bugs. It prentends that an object is just a bit pattern that can be treated as if it were an entirely different type of object. The key is that you'll need to cast back to the original type to use it safely. It is typically used only for bit twiddling or some other mysterious purpose.
+
+* `dynamic_cast`: For type-safe downcasting.
