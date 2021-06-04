@@ -14,6 +14,14 @@
 * Preprocessor Macros Overview
 * Operators
 * Explicit Casting
+* `struct`: Composite type creation
+* Clarifying programs with `enum`
+* Saving memory with `union`
+* Arrays
+* Command-line Arguments
+* Function pointer
+* Array of pointers to function
+* [Make: managing separate compilation](./make)
 
 ## Using the C function library
 
@@ -196,3 +204,156 @@ Here the second `b` is sueprfluous.
 * `reinterpret_cast`: This is the least safe of the casting mechanisms, and the one most likely to produce bugs. It prentends that an object is just a bit pattern that can be treated as if it were an entirely different type of object. The key is that you'll need to cast back to the original type to use it safely. It is typically used only for bit twiddling or some other mysterious purpose.
 
 * `dynamic_cast`: For type-safe downcasting.
+
+## `struct`: Composite type creation
+
+> `struct` is the fundation for `class` in C++.
+
+The simplest way to create more sophisticated types is simply to alias a name to another name via `typedef <existing-type-description> <alis-name>`. It is used just to prevent extra keystrokes.
+
+```cpp
+typedef unsigned long ulong;
+```
+
+`struct` is a way to collect a group of variables into a structure. You can make many instances of this "new" type of variable.
+
+```cpp
+struct Structure1 {
+  char c;
+  int i;
+  float f;
+  dobule d;
+};
+
+int main() {
+  struct Structure1 s1;
+  s1.c = 'a';
+  s1.i = 1;
+  s1.f = 3.14;
+  s1.d = 0.00093;
+}
+```
+
+```cpp
+typedef struct { ... } Structure2;
+
+Structure2 s1;
+```
+
+```
+typedef struct SelfReferential {
+  int i;
+  SelfReferential* sr;
+} SelfReferential;
+```
+
+## Clarifying programs with `enum`
+
+An enumerated data type is a way of attaching names to numbers, thereby giving more meaning to anyone reading the code.
+
+```cpp
+enum ShapeType {
+  circle,
+  square,
+  rectangle
+};
+
+int main() {
+  ShapeType shape = circle;
+  
+  switch(shape) {
+    case circle: /* circle stuff */ break;
+    case square: /* square stuff */ break;
+    case rectangle: /* rectangle stuff */ break;
+  }
+}
+```
+
+If you don't like the way the compiler assigns values, you can do it yourself:
+
+```cpp
+enum ShapeType {
+  circle = 10,
+  square = 20,
+  rectangle = 50,
+  pentagon
+};
+```
+
+## Saving memory with `union`
+
+Sometimes a program will handle different types of data using the same variable. In this situation, you can create a `struct` containing all the possible different types you might need to store, or you can use a `union`. A `union` piles all the data into a single space; it figures out the amount of space necessary for the largest item you've put in the `union` and makes that the size of the `union`.
+
+Anytime you place a value in a `union`, the value always starts in the same place at the beginning of the `union`, but only uses as much space as is necessary. Thus, you create a "super-variable" capable of holding any of the `union` variables. All the addresses of the `union` variables are the same (in a class or `struct`, the addresses are different).
+
+```cpp
+union Packed {
+  char i;
+  short j;
+  int k;
+  long l;
+  float f;
+  double d;
+  // The union will be the size of a double,
+  // since that's the largest element.
+};
+
+int main() {
+  Packed x;
+  x.i = 'c';
+  cout << x.i << endl;
+  x.d = 3.14159
+  cout << x.d << endl;
+}
+```
+
+The compiler performs the proper assignment according to the union member you select.
+
+## Arrays
+
+```cpp
+int a[10]
+<type> <identifier>[<size>]
+```
+
+Array access is extremely fast. However, if you index past the end of the array, there is no safety net, you'll step on other variables. The other drawback is that you must define the size of the array at compile time; if you want to change the size at runtime you can't do it with the syntax above. The C++ `vector` provides an array-like object that automatically resizes itself, so it is usually a much better solution if your array size cannot be known at compile time.
+
+### Pointers and arrays
+
+The identifier of an array is unlike the identifiers of ordinary variables. When you give the name of an array, without square brackets, you get the starting address of the array.
+
+One way to look at the array identifier is a **read only pointer to the beginning of an array**. And although we can't change the array identifier to point somewhere else, we *can* create another pointer and use that to move around in the array.
+
+```cpp
+int main() {
+  int a[10];
+  int* ip = a;
+  for (int i = 0; i < 10; i ++)
+    ip[i] = i * 10;
+}
+```
+
+## Command-line Arguments
+
+C and C++ have a special argument list for `main()`:
+
+```cpp
+int main(int argc, char* argv[]) { /* ... */ }
+int main(int argc, char** argv[]) { /* ... */ }
+```
+
+The first argument is the number of elements in the array, which is the second argument and is always an array of `char*`, because the arguments are passed from the command line as character arrays. Each whitespace-delimited cluster of characters on the command line is turned into a separate array argument.
+
+## Function Pointer 
+
+```cpp
+void (*funcPtr)();
+```
+
+When you are looking at a complex definition like this, the best way to attack it is to start in the middle and work your way out.
+
+To review, "start in the middle" (`funcPtr` is a ..."), go to the right (nothing there, you're stopped by the right parenthesis), go to the left and find the `*` ("... pointer to a ... "), go to the right and find the empty argument list (" ... function that takes no arguments ... "), go to the left and find the `void`. _funcPtr is a pointer to a function that takes no arguments and returns void_.
+
+## Arrays of pointers to functions
+
+To select a function, yo just index into the array and dereference the pointer. This supports the concept of *table-driven code*. Instead of using conditionals or case statements, you select functions to execute based on a state variable (or a combination). This kind of design can be useful if you often add or delete functions from the table or want to create/change such a table dynamically.
