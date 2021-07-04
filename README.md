@@ -16,4 +16,4 @@ These are my notes on relevant C++ material, especially "*Thinking In C++ - Bruc
 ## Other topics
 
 * [Using Static Libraries](other/static-libraries)
-
+* [Using Dynamic Libraries](other/dynamic-libraries)
